@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
                                 }else { req.append("+" + address.nextToken()); }
                                 tokenCounter +=1;
                         }
-                        req.append("&key=AIzaSyAx5q_BkPjuQVIcneGBm74Qc_2F_bqLkVc");
+                        req.append("&key=APIKEYHERE");
                         String geoCodeUrl = new String(req);
                         String response = get.makeServicesCall(geoCodeUrl);
                         Log.w(TAG, "req at " + req);
