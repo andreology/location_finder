@@ -4,6 +4,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,12 +16,44 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Iterator;
+import java.util.Map;
+
 public class MapsActivity extends Fragment implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private String response;
+    public static String RES_KEY = "response_key";
+    private static final String TAG = "main";
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        return inflater.inflate(R.layout.activity_maps, container, false);
+        View view = inflater.inflate(R.layout.activity_maps, container, false);
+        Bundle args = getArguments();
+        if(args != null) {
+            String response = args.getString(RES_KEY);
+            Log.w(TAG, "LOCATION  " + response);
+               try {
+                JSONObject object = new JSONObject(response);
+                JSONArray results = (JSONArray) object.getJSONArray("results");
+              //  JSONObject geo = (JSONObject) results.getJSONArray("geometry");
+                Log.w(TAG, "RESULTS00  " + results);
+
+//                for (int i = 0; i < results.length(); i++) {
+//                    Log.w(TAG, "INDEX  " + i);
+//                    results.getJSONObject(i);
+//                }
+                Log.w(TAG, "LOCATION0  " + results);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return view;
+        //return inflater.inflate(R.layout.activity_maps, container, false);
     }
    // @Override
 //    protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +77,7 @@ public class MapsActivity extends Fragment implements OnMapReadyCallback {
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        //Log.w(TAG, "IN MAP READY  ");
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera

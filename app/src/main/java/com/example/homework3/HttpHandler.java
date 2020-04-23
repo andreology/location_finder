@@ -42,7 +42,7 @@ public class HttpHandler extends AsyncTask<String, Void, String> {
             InputStream in = new BufferedInputStream(conn.getInputStream());
 
             response = convertStreamToString(in);
-            System.out.println("response0 " + response);
+            //System.out.println("response0 " + response);
         } catch (ProtocolException | MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {

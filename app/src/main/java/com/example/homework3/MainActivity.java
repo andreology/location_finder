@@ -42,12 +42,25 @@ public class MainActivity extends AppCompatActivity {
 //                                }else { req.append("+" + address.nextToken()); }
 //                                tokenCounter +=1;
 //                        }
-                        req.append("&key=AIzaSyDEppvmdTjsMl76XWagm9eqbBwFsOV4kjo");
+                        req.append("&key=APIKEY");
                         String geoCodeUrl = new String(req);
                         // Async call here:
                         String response = get.doInBackground(geoCodeUrl);
-                        Log.w(TAG, "req at " + req);
-                        Log.w(TAG, "fetch response " + response);
+//                        Log.w(TAG, "req at " + req);
+//                        Log.w(TAG, "fetch response " + response);
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString(MapsActivity.RES_KEY, response);
+
+                        MapsActivity fragment = new MapsActivity();
+                        fragment.setArguments(bundle);
+                        // set Fragment class Arguments
+
+                        getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.map, fragment)
+                                .commit();
+
                         return false;
                     }
 
