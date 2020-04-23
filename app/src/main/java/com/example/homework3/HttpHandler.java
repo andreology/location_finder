@@ -1,6 +1,7 @@
 package com.example.homework3;
 
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -16,7 +17,7 @@ import java.net.URL;
 /**
  * Class that handles the retrieval of data from the API (website) in JSON form
  */
-public class HttpHandler {
+public class HttpHandler extends AsyncTask<String, Void, String> {
 
     private static final String TAG = HttpHandler.class.getSimpleName();
 
@@ -24,7 +25,9 @@ public class HttpHandler {
 
     }
 
-    public String makeServicesCall(String reqUrl){
+    @Override
+    protected String doInBackground(String... strings) {
+        String reqUrl = strings[0];
         String response = null;
         Log.w(TAG, "IN MAKE SERVICE CALL " + reqUrl);
         try{
@@ -33,7 +36,7 @@ public class HttpHandler {
             Log.w(TAG, "IN MAKE TRY CATCH BLOCK  " + url);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-           // conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            // conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             Log.w(TAG, "CONN URL  " + conn.toString());
             // read the response
             InputStream in = new BufferedInputStream(conn.getInputStream());
@@ -49,6 +52,32 @@ public class HttpHandler {
         }
         return response;
     }
+
+//    private String makeServicesCall(String reqUrl){
+//        String response = null;
+//        Log.w(TAG, "IN MAKE SERVICE CALL " + reqUrl);
+//        try{
+//
+//            URL url = new URL(reqUrl);
+//            Log.w(TAG, "IN MAKE TRY CATCH BLOCK  " + url);
+//            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+//            conn.setRequestMethod("GET");
+//           // conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+//            Log.w(TAG, "CONN URL  " + conn.toString());
+//            // read the response
+//            InputStream in = new BufferedInputStream(conn.getInputStream());
+//
+//            response = convertStreamToString(in);
+//            System.out.println("response0 " + response);
+//        } catch (ProtocolException | MalformedURLException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (Exception e){
+//            e.printStackTrace();
+//        }
+//        return response;
+//    }
 
     private String convertStreamToString(InputStream is){
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
