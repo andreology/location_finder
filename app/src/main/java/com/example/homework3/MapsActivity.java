@@ -20,7 +20,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class MapsActivity extends Fragment implements OnMapReadyCallback {
@@ -29,6 +31,9 @@ public class MapsActivity extends Fragment implements OnMapReadyCallback {
     private String response;
     public static String RES_KEY = "response_key";
     private static final String TAG = "main";
+    private boolean flag = false;
+    private double lati;
+    private double longi;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.activity_maps, container, false);
@@ -37,16 +42,14 @@ public class MapsActivity extends Fragment implements OnMapReadyCallback {
             String response = args.getString(RES_KEY);
             Log.w(TAG, "LOCATION  " + response);
                try {
+
                 JSONObject object = new JSONObject(response);
                 JSONArray results = (JSONArray) object.getJSONArray("results");
-              //  JSONObject geo = (JSONObject) results.getJSONArray("geometry");
-                Log.w(TAG, "RESULTS00  " + results);
-
-//                for (int i = 0; i < results.length(); i++) {
-//                    Log.w(TAG, "INDEX  " + i);
-//                    results.getJSONObject(i);
-//                }
-                Log.w(TAG, "LOCATION0  " + results);
+                   List<String> list = new ArrayList<String>();
+                  lati =  results.getJSONObject(0).getJSONObject("geometry").getJSONObject("location").getDouble("lat");
+                  longi =  results.getJSONObject(0).getJSONObject("geometry").getJSONObject("location").getDouble("lng");
+                Log.w(TAG, "RESULTS00  " + lati);
+                 //flag = true;
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -81,7 +84,7 @@ public class MapsActivity extends Fragment implements OnMapReadyCallback {
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
+        LatLng sydney = ((flag) ? new LatLng(lati , longi) : new LatLng(-34, 151));
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }

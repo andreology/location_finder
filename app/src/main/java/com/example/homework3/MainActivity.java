@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
 //                                }else { req.append("+" + address.nextToken()); }
 //                                tokenCounter +=1;
 //                        }
-                        req.append("&key=APIKEY");
+                        req.append("&key=apikey");
                         String geoCodeUrl = new String(req);
                         // Async call here:
                         String response = get.doInBackground(geoCodeUrl);
