@@ -1,13 +1,16 @@
+//Andre barajas, Hunter
+//Google maps location finder project
+//Spring 2020
 package com.example.homework3;
 
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.text.InputType;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -15,77 +18,108 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.Iterator;
+import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.widget.TextView;
+import android.widget.Toast;
 import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.ArrayList;
 
-public class MapsActivity extends Fragment implements OnMapReadyCallback {
-
+//Class to set up Maps activity and list locations requested by user
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, SendListEventsCallBack {
+    private EditText tEditSearch;
+    private Geocoder tGeoCode;
+    private List<MarkerLocation> tSaveSearchedLocations;
+    private RecyclerView mRecyclerList;
+    private LocationHolder mRecyclerListAdapter;
     private GoogleMap mMap;
-    private String response;
-    public static String RES_KEY = "response_key";
-    private static final String TAG = "main";
-    private boolean flag = false;
-    private double lati;
-    private double longi;
-
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        View view = inflater.inflate(R.layout.activity_maps, container, false);
-        Bundle args = getArguments();
-        if(args != null) {
-            String response = args.getString(RES_KEY);
-            Log.w(TAG, "LOCATION  " + response);
-               try {
-
-                JSONObject object = new JSONObject(response);
-                JSONArray results = (JSONArray) object.getJSONArray("results");
-                   List<String> list = new ArrayList<String>();
-                  lati =  results.getJSONObject(0).getJSONObject("geometry").getJSONObject("location").getDouble("lat");
-                  longi =  results.getJSONObject(0).getJSONObject("geometry").getJSONObject("location").getDouble("lng");
-                Log.w(TAG, "RESULTS00  " + lati);
-                 //flag = true;
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return view;
-        //return inflater.inflate(R.layout.activity_maps, container, false);
+    //setting up a default location for map to place marker at
+    static final LatLng QMARY = new LatLng(33.7526d, -118.1903d);
+    //allows zooming from 2 to twenty one
+    static final float ALLOW_ZOOM = 10f;
+    //setting up async to call map while app loads
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
+        //wait till map is ready before starting fragment
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_view);
+        mapFragment.getMapAsync(this);
     }
-   // @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//       // super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_maps);
-//        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-//                .findFragmentById(R.id.map);
-//        mapFragment.getMapAsync(this);
-//    }
-
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+    //method to display map and show search box using edittext.
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        //Log.w(TAG, "IN MAP READY  ");
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = ((flag) ? new LatLng(lati , longi) : new LatLng(-34, 151));
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.addMarker(new MarkerOptions()
+                .position(QMARY)
+                .title(getResources().getString(R.string.default_marker)));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(QMARY));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(ALLOW_ZOOM));
+        //using java geocode library to decode addresses
+        tGeoCode = new Geocoder(this);
+        tSaveSearchedLocations = new ArrayList<>();
+        tSaveSearchedLocations.add(new MarkerLocation(QMARY,getResources().getString(R.string.default_marker)));
+        //get edittextg widget to check user input
+        tEditSearch = findViewById(R.id.edittext_view);
+        tEditSearch.setInputType(InputType.TYPE_NULL);
+        //https://stackoverflow.com/questions/8063439/android-edittext-finished-typing-event
+        //wait until user is done typing and hits enter to begin searching
+        tEditSearch.setOnEditorActionListener(
+                new EditText.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                                actionId == EditorInfo.IME_ACTION_DONE ||
+                                event != null &&
+                                        event.getAction() == KeyEvent.ACTION_DOWN &&
+                                        event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                            if (event == null || !event.isShiftPressed()) {
+                                // the user is done typing.
+                                findLocationThenMark();
+                                return true; // consume.
+                            }
+                        }
+                        return false; // pass on to other listeners.
+                    }
+                }
+        );
+        //Create a list of locations being entered into "database"
+        mRecyclerList = findViewById(R.id.recycler_list);
+        mRecyclerListAdapter = new LocationHolder(this, tSaveSearchedLocations);
+        //pass adapter to class
+        mRecyclerList.setAdapter(mRecyclerListAdapter);
+        mRecyclerList.setLayoutManager(new LinearLayoutManager(this));
+    }
+    //method to move camera to new location, if location exists marker will be set
+    //otherwise error message should pop up on UI
+    void findLocationThenMark() {
+        //Change map view to show new location
+        String locus = tEditSearch.getText().toString();
+        if (locus.isEmpty()) { return; }
+        tEditSearch.setText("");
+        // try catch block to use java geo code and find lat and long of address provided
+        try {
+            List<Address> locations = tGeoCode.getFromLocationName(locus, 1);
+            //throw error message
+            if(locations == null) { throw new IOException("Error: The location you entered doesn't exist, try again. "); }
+            Address foundAddress = locations.get(0);
+            //store lat and long of new locus
+            LatLng markPlace = new LatLng(foundAddress.getLatitude(), foundAddress.getLongitude());
+            mMap.addMarker(new MarkerOptions().position(markPlace).title(locus).snippet(" "));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(markPlace));
+            //save to database
+            tSaveSearchedLocations.add(new MarkerLocation(markPlace, locus));
+            mRecyclerListAdapter.notifyItemInserted(tSaveSearchedLocations.size() - 1);
+        } catch (Exception e) {
+            Toast.makeText(this, "\"" + locus + "\" NOT A VALID input", Toast.LENGTH_LONG).show();
+        }
+    }
+    //callback method from professor fahim lecture needed for sending events between activities and fragments.
+    public void recyclerCallbackFn(MarkerLocation location) {
+        //passing call back data
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(location.tLatandLong));
     }
 }
